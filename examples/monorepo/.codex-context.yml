@@ -1,0 +1,18 @@
+contracts:
+  - id: payments-test-command
+    paths:
+      - services/payments/**
+    assertions:
+      - type: contains
+        value: make test-payments
+      - type: regex
+        value: Do not rotate API keys|Never rotate API keys
+    severity: error
+
+  - id: web-test-command
+    paths:
+      - apps/web/**
+    assertions:
+      - type: contains
+        value: pnpm test
+    severity: warning

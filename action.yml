@@ -1,0 +1,47 @@
+name: codex-context-probe
+description: Deterministic preflight for Codex-powered pull request instruction context.
+author: Tomohiro Taguchi
+
+inputs:
+  path:
+    description: Repository path to inspect.
+    required: false
+    default: "."
+  base:
+    description: Git revision or ref to diff against.
+    required: false
+    default: "origin/main"
+  fail-on:
+    description: none, warning, or error.
+    required: false
+    default: "error"
+  contracts:
+    description: Optional path to .codex-context.yml.
+    required: false
+    default: ".codex-context.yml"
+  output:
+    description: Markdown report output path.
+    required: false
+    default: "codex-context-report.md"
+  sarif:
+    description: SARIF output path.
+    required: false
+    default: "codex-context.sarif"
+
+runs:
+  using: composite
+  steps:
+    - name: Install codex-context-probe
+      shell: bash
+      run: python -m pip install "$GITHUB_ACTION_PATH"
+    - name: Verify Codex context
+      shell: bash
+      run: |
+        codex-context-probe verify "${{ inputs.path }}" \
+          --base "${{ inputs.base }}" \
+          --contracts "${{ inputs.contracts }}" \
+          --format markdown \
+          --output "${{ inputs.output }}" \
+          --sarif "${{ inputs.sarif }}" \
+          --summary "$GITHUB_STEP_SUMMARY" \
+          --fail-on "${{ inputs.fail-on }}"
