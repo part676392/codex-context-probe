@@ -43,6 +43,30 @@ def test_override_shadows_base_file(tmp_path):
     assert any(finding.rule_id == "DISC003" for finding in result.findings)
 
 
+def test_shadowed_file_content_is_not_scanned_by_default(tmp_path):
+    repo = tmp_path / "repo"
+    service = repo / "service"
+    write(service / "AGENTS.override.md", "# Override\nUse `make service-test`.\n")
+    write(service / "AGENTS.md", 'Base\napi_key = "shadowed-secret-value-123456"\n')
+
+    result = inspect_project(repo, cwd=service, codex_home=tmp_path / "home")
+
+    assert any(candidate.status == "shadowed" for candidate in result.candidates)
+    assert not any(finding.rule_id == "SEC001" for finding in result.findings)
+
+
+def test_shadowed_file_content_can_be_scanned_when_requested(tmp_path):
+    repo = tmp_path / "repo"
+    service = repo / "service"
+    write(service / "AGENTS.override.md", "# Override\nUse `make service-test`.\n")
+    write(service / "AGENTS.md", 'Base\napi_key = "shadowed-secret-value-123456"\n')
+
+    result = inspect_project(repo, cwd=service, codex_home=tmp_path / "home", scan_shadowed=True)
+
+    assert any(candidate.status == "shadowed" for candidate in result.candidates)
+    assert any(finding.rule_id == "SEC001" for finding in result.findings)
+
+
 def test_fallback_filename_from_config(tmp_path):
     repo = tmp_path / "repo"
     write(repo / ".codex" / "config.toml", 'project_doc_fallback_filenames = ["TEAM_GUIDE.md"]\n')
@@ -81,7 +105,7 @@ def test_project_config_ignored_keys_are_reported(tmp_path):
 
 def test_secret_detection(tmp_path):
     repo = tmp_path / "repo"
-    write(repo / "AGENTS.md", '# Root\napi_key = "example-secret-value-123456"\n')
+    write(repo / "AGENTS.md", 'Root\napi_key = "example-secret-value-123456"\n')
 
     result = inspect_project(repo, codex_home=tmp_path / "home")
 
