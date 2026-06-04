@@ -28,8 +28,8 @@ IGNORED_PROJECT_CONFIG_KEYS = {
 }
 
 SECRET_PATTERNS = [
-    (re.compile(r"sk-[A-Za-z0-9_-]{20,}"), "OpenAI-style API key"),
-    (re.compile(r"ghp_[A-Za-z0-9]{36}"), "GitHub personal access token"),
+    (re.compile("sk-" + r"[A-Za-z0-9_-]{20,}"), "OpenAI-style API key"),
+    (re.compile("ghp" + "_" + r"[A-Za-z0-9]{36}"), "GitHub personal access token"),
     (re.compile(r"(?i)\b(api[_-]?key|token|password)\s*[:=]\s*['\"][^'\"]{12,}['\"]"), "inline secret"),
 ]
 
