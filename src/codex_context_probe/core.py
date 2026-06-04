@@ -48,8 +48,16 @@ def inspect_project(
     cwd: Path | None = None,
     codex_home: Path | None = None,
     emit_context_path: Path | None = None,
+    scan_shadowed: bool = False,
 ) -> Inspection:
-    """Inspect the instruction files Codex would load for a project and cwd."""
+    """Inspect the instruction files Codex would load for a project and cwd.
+
+    By default, content-level checks run only on selected instruction files. This
+    keeps the tool aligned with its core promise: report what Codex can actually
+    see for the target working directory. Pass ``scan_shadowed=True`` when a
+    caller wants a broader repository hygiene pass over shadowed instruction
+    files as well.
+    """
 
     root = project_root.resolve()
     if not root.is_dir():
@@ -98,7 +106,7 @@ def inspect_project(
         )
 
     _apply_byte_budget(candidates, max_bytes, findings)
-    _scan_content(candidates, findings)
+    _scan_content(_content_scan_targets(candidates, scan_shadowed=scan_shadowed), findings)
 
     total_selected_bytes = sum(c.size_bytes for c in candidates if c.selected)
     total_included_bytes = sum(c.included_bytes for c in candidates if c.selected)
@@ -330,10 +338,14 @@ def _apply_byte_budget(candidates: list[InstructionCandidate], max_bytes: int, f
         )
 
 
+def _content_scan_targets(candidates: list[InstructionCandidate], scan_shadowed: bool) -> list[InstructionCandidate]:
+    if scan_shadowed:
+        return [candidate for candidate in candidates if candidate.non_empty]
+    return [candidate for candidate in candidates if candidate.selected and candidate.non_empty]
+
+
 def _scan_content(candidates: list[InstructionCandidate], findings: list[Finding]) -> None:
     for candidate in candidates:
-        if not candidate.non_empty:
-            continue
         path = Path(candidate.path)
         try:
             lines = path.read_text(encoding="utf-8").splitlines()
