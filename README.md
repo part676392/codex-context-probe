@@ -40,10 +40,14 @@ maintainer automation, or release work.
 - Reports objective failures:
   - instruction truncation or excluded bytes
   - ignored project-scoped Codex config keys
-  - invalid UTF-8
-  - secret-like strings in instruction files
+  - invalid UTF-8 in visible instruction files
+  - secret-like strings in visible instruction files
 - Supports optional `.codex-context.yml` contracts for path-scoped context tests.
 - Requires no OpenAI API key for the deterministic path.
+
+By default, content-level checks run only on instruction files that Codex can
+actually see for the changed path. Use `--scan-shadowed` when you also want to
+scan shadowed, non-selected instruction files as a broader hygiene check.
 
 ## Install
 
@@ -83,6 +87,40 @@ codex-context-probe verify . \
   --sarif codex-context.sarif
 ```
 
+## Example Output
+
+Terminal output is intentionally compact so it works in local development and CI
+logs:
+
+```text
+╭─ codex-context-probe changed paths [PASS] ─────────────────────────────╮
+│ Project: /repo                                                         │
+│ Base: origin/main                                                      │
+│ Changed paths: 1                                                       │
+│ Findings: 0 errors, 1 warnings                                         │
+╰────────────────────────────────────────────────────────────────────────╯
+
+Changed path context
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Path                         ┃ CWD                  ┃ Included files       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
+│ services/payments/handler.py │ /repo/services/pay…  │ AGENTS.md, AGENTS.md │
+└──────────────────────────────┴──────────────────────┴──────────────────────┘
+```
+
+Markdown output is designed for PR summaries:
+
+```markdown
+# codex-context-probe changed-path report
+
+- Changed paths: `1`
+- Findings: `0` errors, `1` warnings
+
+| Path | CWD | Included instruction files | Bytes | Findings |
+|---|---|---|---:|---:|
+| `services/payments/handler.py` | `/repo/services/payments` | AGENTS.md<br>AGENTS.md | 612/32768 | 0 errors, 1 warnings |
+```
+
 ## GitHub Action
 
 ```yaml
@@ -102,7 +140,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: part676392/codex-context-probe@v0.1.0
+      - uses: part676392/codex-context-probe@main
         with:
           base: origin/main
           sarif: codex-context.sarif
@@ -112,10 +150,10 @@ jobs:
           sarif_file: codex-context.sarif
 ```
 
-For stricter environments, pin third-party actions by commit SHA.
+For stricter environments, pin third-party actions and this action by commit SHA.
 
-The repository also includes a CI template at
-`docs/github-actions-ci.yml`.
+The repository includes its own CI workflow at `.github/workflows/ci.yml` and a
+copyable CI template at `docs/github-actions-ci.yml`.
 
 ## Optional Contracts
 
