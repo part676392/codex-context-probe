@@ -140,7 +140,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: part676392/codex-context-probe@main
+      - uses: part676392/codex-context-probe@v0.1.1
         with:
           base: origin/main
           sarif: codex-context.sarif
