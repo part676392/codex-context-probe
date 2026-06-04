@@ -40,6 +40,7 @@ def main() -> None:
 @click.option("--output", "-o", type=click.Path(dir_okay=False), default=None)
 @click.option("--sarif", type=click.Path(dir_okay=False), default=None)
 @click.option("--emit-context", type=click.Path(dir_okay=False), default=None)
+@click.option("--scan-shadowed", is_flag=True, help="Also scan shadowed non-selected instruction files for content findings.")
 @click.option("--fail-on", type=click.Choice(FAIL_LEVELS), default="error", show_default=True)
 def inspect_command(
     path: str,
@@ -49,6 +50,7 @@ def inspect_command(
     output: str | None,
     sarif: str | None,
     emit_context: str | None,
+    scan_shadowed: bool,
     fail_on: str,
 ) -> None:
     """Inspect Codex instruction discovery for one working directory."""
@@ -60,6 +62,7 @@ def inspect_command(
         cwd=cwd,
         codex_home=Path(codex_home) if codex_home else None,
         emit_context_path=Path(emit_context) if emit_context else None,
+        scan_shadowed=scan_shadowed,
     )
     _emit_inspection(inspection, output_format, output)
     if sarif:
@@ -77,6 +80,7 @@ def inspect_command(
 @click.option("--output", "-o", type=click.Path(dir_okay=False), default=None)
 @click.option("--sarif", type=click.Path(dir_okay=False), default=None)
 @click.option("--summary", type=click.Path(dir_okay=False), default=None, help="Write GitHub Step Summary markdown.")
+@click.option("--scan-shadowed", is_flag=True, help="Also scan shadowed non-selected instruction files for content findings.")
 @click.option("--fail-on", type=click.Choice(FAIL_LEVELS), default="error", show_default=True)
 def changed_command(
     path: str,
@@ -88,13 +92,20 @@ def changed_command(
     output: str | None,
     sarif: str | None,
     summary: str | None,
+    scan_shadowed: bool,
     fail_on: str,
 ) -> None:
     """Build a Codex context manifest for git-changed paths."""
 
     root = Path(path)
     changed_paths = collect_git_changed_paths(root, base)
-    report = inspect_changed_paths(root, changed_paths, base=base, codex_home=Path(codex_home) if codex_home else None)
+    report = inspect_changed_paths(
+        root,
+        changed_paths,
+        base=base,
+        codex_home=Path(codex_home) if codex_home else None,
+        scan_shadowed=scan_shadowed,
+    )
     _maybe_apply_contracts(report, root, contracts, no_contracts)
     _emit_changed(report, output_format, output)
     if sarif:
@@ -114,6 +125,7 @@ def changed_command(
 @click.option("--output", "-o", type=click.Path(dir_okay=False), default=None)
 @click.option("--sarif", type=click.Path(dir_okay=False), default=None)
 @click.option("--summary", type=click.Path(dir_okay=False), default=None, help="Write GitHub Step Summary markdown.")
+@click.option("--scan-shadowed", is_flag=True, help="Also scan shadowed non-selected instruction files for content findings.")
 @click.option("--fail-on", type=click.Choice(FAIL_LEVELS), default="error", show_default=True)
 def verify_command(
     path: str,
@@ -125,6 +137,7 @@ def verify_command(
     output: str | None,
     sarif: str | None,
     summary: str | None,
+    scan_shadowed: bool,
     fail_on: str,
 ) -> None:
     """CI-friendly alias for changed."""
@@ -141,6 +154,7 @@ def verify_command(
         output=output,
         sarif=sarif,
         summary=summary,
+        scan_shadowed=scan_shadowed,
         fail_on=fail_on,
     )
 
