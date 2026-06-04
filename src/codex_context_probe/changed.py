@@ -29,6 +29,7 @@ def inspect_changed_paths(
     changed_paths: list[str],
     base: str | None = None,
     codex_home: Path | None = None,
+    scan_shadowed: bool = False,
 ) -> ChangedReport:
     """Inspect effective Codex context for each changed path."""
 
@@ -40,7 +41,7 @@ def inspect_changed_paths(
         cwd = _cwd_for_changed_path(root, rel_path)
         cache_key = str(cwd)
         if cache_key not in cwd_cache:
-            cwd_cache[cache_key] = inspect_project(root, cwd=cwd, codex_home=codex_home)
+            cwd_cache[cache_key] = inspect_project(root, cwd=cwd, codex_home=codex_home, scan_shadowed=scan_shadowed)
         results.append(
             ChangedPathInspection(
                 path=rel_path,
