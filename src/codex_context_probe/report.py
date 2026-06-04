@@ -37,7 +37,7 @@ def render_inspection_markdown(inspection: Inspection) -> str:
             continue
         lines.append(
             f"| {candidate.status} | {candidate.scope} | {candidate.size_bytes} | "
-            f"{candidate.included_bytes} | `{candidate.path}` | {(candidate.reason or '').replace('|', '\\|')} |"
+            f"{candidate.included_bytes} | `{candidate.path}` | {_escape_markdown_table_cell(candidate.reason)} |"
         )
     lines.extend(["", "## Findings", ""])
     _append_findings_markdown(lines, inspection.findings)
@@ -82,7 +82,8 @@ def render_changed_markdown(report: ChangedReport) -> str:
                 location = f"{location}:{finding.line}"
             lines.append(
                 f"| `{changed_path}` | {finding.severity} | {finding.rule_id} | `{location}` | "
-                f"{finding.message.replace('|', '\\|')} | {(finding.suggestion or '').replace('|', '\\|')} |"
+                f"{_escape_markdown_table_cell(finding.message)} | "
+                f"{_escape_markdown_table_cell(finding.suggestion)} |"
             )
 
     return "\n".join(lines) + "\n"
@@ -158,8 +159,12 @@ def _append_findings_markdown(lines: list[str], findings: list[Finding]) -> None
             location = f"{location}:{finding.line}"
         lines.append(
             f"| {finding.severity} | {finding.rule_id} | `{location}` | "
-            f"{finding.message.replace('|', '\\|')} | {(finding.suggestion or '').replace('|', '\\|')} |"
+            f"{_escape_markdown_table_cell(finding.message)} | {_escape_markdown_table_cell(finding.suggestion)} |"
         )
+
+
+def _escape_markdown_table_cell(value: str | None) -> str:
+    return (value or "").replace("|", "\\|")
 
 
 def _print_panel(console: Console, title: str, status_errors: int, lines: list[str]) -> None:
