@@ -27,6 +27,10 @@ inputs:
     description: SARIF output path.
     required: false
     default: "codex-context.sarif"
+  scan-shadowed:
+    description: Also scan shadowed non-selected instruction files for content findings.
+    required: false
+    default: "false"
 
 runs:
   using: composite
@@ -37,6 +41,10 @@ runs:
     - name: Verify Codex context
       shell: bash
       run: |
+        EXTRA_ARGS=""
+        if [ "${{ inputs.scan-shadowed }}" = "true" ]; then
+          EXTRA_ARGS="--scan-shadowed"
+        fi
         codex-context-probe verify "${{ inputs.path }}" \
           --base "${{ inputs.base }}" \
           --contracts "${{ inputs.contracts }}" \
@@ -44,4 +52,5 @@ runs:
           --output "${{ inputs.output }}" \
           --sarif "${{ inputs.sarif }}" \
           --summary "$GITHUB_STEP_SUMMARY" \
-          --fail-on "${{ inputs.fail-on }}"
+          --fail-on "${{ inputs.fail-on }}" \
+          $EXTRA_ARGS
